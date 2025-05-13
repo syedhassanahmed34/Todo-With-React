@@ -175,16 +175,11 @@ body {
 }
 
 /* ===== WELCOME SECTION ===== */
+/* ===== WELCOME SECTION ===== */
 .welcome-section {
   padding: 25px;
   background-color: #f1f5f9;
-  color: #1e293b;
-  position: relative;
-}
-
-.welcome-content {
-  position: relative;
-  z-index: 1;
+  border-radius: 12px 12px 0 0; /* Only round top corners */
 }
 
 .welcome-section h2 {
@@ -209,24 +204,31 @@ body {
   display: flex;
   align-items: center;
   background: #fff;
-  border-radius: 24px;
-  padding: 8px 15px;
-  margin: 0 20px 15px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 12px 12px; /* Match welcome section radius */
+  padding: 12px 20px;
+  margin: 0 0 20px; /* No horizontal margin */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #e2e8f0;
+  border-top: none; /* Remove top border for seamless connection */
+  transition: all 0.3s ease;
+}
+
+.search-bar:focus-within {
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.2); /* Purple glow when focused */
 }
 
 .search-bar input {
   border: none;
   outline: none;
   flex: 1;
-  margin-left: 8px;
-  font-size: 14px;
+  margin-left: 12px;
+  font-size: 15px;
   background: transparent;
+  color: #334155;
 }
 
 .search-icon {
-  color: #94a3b8;
+  color: #8b5cf6; /* Purple color to match theme */
 }
 
 /* ===== ADD TASK SECTION ===== */
