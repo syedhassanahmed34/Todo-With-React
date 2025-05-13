@@ -1,0 +1,78 @@
+/* Resetting some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Basic body styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f7fafc;
+    color: #333;
+    line-height: 1.6;
+}
+
+/* Adding a global container class for consistent padding */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+
+/* Styling for the app's main header */
+header {
+    background-color: #ffffff;
+    padding: 16px 0;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Center the logo and provide some space */
+header h1 {
+    text-align: center;
+    font-size: 32px;
+    color: #333;
+}
+
+/* Link styling for navigation */
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+/* Default button styles across the app */
+button {
+    cursor: pointer;
+    border: none;
+    outline: none;
+}
+
+/* Global styles for form inputs (like textboxes) */
+input,
+button {
+    font-size: 16px;
+}
+
+/* General responsive design adjustments */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+    }
+
+    header h1 {
+        font-size: 28px;
+    }
+}
+
+/* You can include a general flex layout or styling for mobile-first design */
+@media (max-width: 600px) {
+    .container {
+        padding: 0 8px;
+    }
+
+    header h1 {
+        font-size: 24px;
+    }
+}
