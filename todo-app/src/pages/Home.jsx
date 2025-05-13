@@ -1,5 +1,4 @@
 "use client"
-
 import React, { useState, useEffect } from "react"
 import { auth, db } from "../firebase"
 import { signOut, onAuthStateChanged } from "firebase/auth"
@@ -46,6 +45,31 @@ function Home() {
       pauseOnHover: true,
       draggable: true,
     })
+  }
+
+  // Validate task input
+  const validateTask = (task) => {
+    const trimmedTask = task.trim()
+
+    // 1. Check for empty task
+    if (!trimmedTask) {
+      showToast("Task cannot be empty!", "error")
+      return false
+    }
+
+    // 2. NEW: Check if task is only numbers
+    if (/^[\d\s]+$/.test(trimmedTask)) {
+      showToast("Task cannot be only numbers!", "error")
+      return false
+    }
+
+    // 3. Check for special characters
+    if (/[^a-zA-Z0-9\s.,!?-]/.test(trimmedTask)) {
+      showToast("Only letters, numbers and basic punctuation allowed", "error")
+      return false
+    }
+
+    return true
   }
 
   useEffect(() => {
@@ -120,14 +144,11 @@ function Home() {
   }
 
   const handleAddTodo = async () => {
-    if (!newTodo.trim()) {
-      showToast("Task cannot be empty!", "error")
-      return
-    }
+    if (!validateTask(newTodo)) return
 
     try {
       await addDoc(collection(db, "todos"), {
-        text: newTodo,
+        text: newTodo.trim(),
         uid: user.uid,
         completed: false,
         createdAt: new Date(),
@@ -170,14 +191,11 @@ function Home() {
   }
 
   const handleUpdateTodo = async () => {
-    if (currentEditTodo.text.trim() === "") {
-      showToast("Task cannot be empty!", "error")
-      return
-    }
+    if (!validateTask(currentEditTodo.text)) return
 
     try {
       await updateDoc(doc(db, "todos", currentEditTodo.id), {
-        text: currentEditTodo.text,
+        text: currentEditTodo.text.trim(),
       })
       setIsEditDialogOpen(false)
       fetchTodos(user.uid)
