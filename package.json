@@ -2,7 +2,8 @@
   "dependencies": {
     "firebase": "^11.7.1",
     "framer-motion": "^12.11.0",
-    "lucide-react": "^0.510.0"
+    "lucide-react": "^0.510.0",
+    "react-toastify": "^11.0.5"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",

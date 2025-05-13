@@ -16,8 +16,10 @@ import {
   setDoc,
 } from "firebase/firestore"
 import { useNavigate } from "react-router-dom"
-import { LogOut, Plus, Trash2, Edit2, Check, X, User } from "lucide-react"
+import { LogOut, Plus, Trash2, Edit2, Check, X, User, Search } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { ToastContainer, toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 import "./Home.css"
 
 function Home() {
@@ -25,13 +27,26 @@ function Home() {
   const [userName, setUserName] = useState("")
   const [userEmail, setUserEmail] = useState("")
   const [todos, setTodos] = useState([])
+  const [filteredTodos, setFilteredTodos] = useState([])
   const [newTodo, setNewTodo] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [currentEditTodo, setCurrentEditTodo] = useState({ id: "", text: "" })
   const [loading, setLoading] = useState(true)
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [showEmptyTaskError, setShowEmptyTaskError] = useState(false)
   const navigate = useNavigate()
+
+  // Toast notifications
+  const showToast = (message, type = "success") => {
+    toast[type](message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+  }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -81,6 +96,13 @@ function Home() {
     return () => unsubscribe()
   }, [navigate])
 
+  useEffect(() => {
+    const filtered = todos.filter(todo =>
+      todo.text.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredTodos(filtered)
+  }, [searchTerm, todos])
+
   const fetchTodos = async (uid) => {
     try {
       const q = query(collection(db, "todos"), where("uid", "==", uid))
@@ -91,15 +113,15 @@ function Home() {
         completed: doc.data().completed || false,
       }))
       setTodos(data)
+      setFilteredTodos(data)
     } catch (error) {
-      console.error("Error fetching todos:", error)
+      showToast("Failed to load tasks", "error")
     }
   }
 
   const handleAddTodo = async () => {
-    if (newTodo.trim() === "") {
-      setShowEmptyTaskError(true)
-      setTimeout(() => setShowEmptyTaskError(false), 3000)
+    if (!newTodo.trim()) {
+      showToast("Task cannot be empty!", "error")
       return
     }
 
@@ -112,8 +134,9 @@ function Home() {
       })
       setNewTodo("")
       fetchTodos(user.uid)
+      showToast("Task added successfully!")
     } catch (error) {
-      console.error("Error adding todo:", error)
+      showToast("Failed to add task", "error")
     }
   }
 
@@ -121,19 +144,23 @@ function Home() {
     try {
       await deleteDoc(doc(db, "todos", id))
       fetchTodos(user.uid)
+      showToast("Task deleted successfully!")
     } catch (error) {
-      console.error("Error deleting todo:", error)
+      showToast("Failed to delete task", "error")
     }
   }
 
   const handleToggleComplete = async (id, currentStatus) => {
+    if (currentStatus) return // Prevent unchecking
+
     try {
       await updateDoc(doc(db, "todos", id), {
-        completed: !currentStatus,
+        completed: true,
       })
       fetchTodos(user.uid)
+      showToast("Task completed! 🎉")
     } catch (error) {
-      console.error("Error updating todo status:", error)
+      showToast("Failed to update task", "error")
     }
   }
 
@@ -143,7 +170,10 @@ function Home() {
   }
 
   const handleUpdateTodo = async () => {
-    if (currentEditTodo.text.trim() === "") return
+    if (currentEditTodo.text.trim() === "") {
+      showToast("Task cannot be empty!", "error")
+      return
+    }
 
     try {
       await updateDoc(doc(db, "todos", currentEditTodo.id), {
@@ -151,8 +181,9 @@ function Home() {
       })
       setIsEditDialogOpen(false)
       fetchTodos(user.uid)
+      showToast("Task updated successfully!")
     } catch (error) {
-      console.error("Error updating todo:", error)
+      showToast("Failed to update task", "error")
     }
   }
 
@@ -160,8 +191,9 @@ function Home() {
     try {
       await signOut(auth)
       navigate("/login")
+      showToast("Logged out successfully")
     } catch (error) {
-      console.error("Error signing out:", error)
+      showToast("Failed to logout", "error")
     }
   }
 
@@ -170,6 +202,9 @@ function Home() {
       handleAddTodo()
     }
   }
+
+  const completedTasksCount = todos.filter(todo => todo.completed).length
+  const totalTasksCount = todos.length
 
   if (loading) {
     return (
@@ -200,6 +235,7 @@ function Home() {
 
   return (
     <div className="app-background">
+      <ToastContainer />
       <motion.div
         className="home-container"
         initial={{ opacity: 0 }}
@@ -215,6 +251,9 @@ function Home() {
             Taskify
           </motion.h1>
           <div className="user-info">
+            <div className="task-stats">
+              {completedTasksCount}/{totalTasksCount} completed
+            </div>
             <span className="user-email">{userEmail}</span>
             <div className="user-menu-container">
               <button
@@ -267,10 +306,20 @@ function Home() {
                 transition={{ delay: 0.5 }}
               >
                 {todos.length > 0
-                  ? `You have ${todos.length} task${todos.length !== 1 ? 's' : ''} to complete`
+                  ? `You have ${todos.length} task${todos.length !== 1 ? 's' : ''} (${completedTasksCount} completed)`
                   : "Organize your day, one task at a time"}
               </motion.p>
             </div>
+          </div>
+
+          <div className="search-bar">
+            <Search size={20} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
           <div className="add-task-section">
@@ -288,16 +337,6 @@ function Home() {
                 placeholder="What needs to be done?"
                 className="task-input"
               />
-              {showEmptyTaskError && (
-                <motion.div
-                  className="error-message"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  Please enter a task
-                </motion.div>
-              )}
             </motion.div>
             <motion.button
               onClick={handleAddTodo}
@@ -317,13 +356,13 @@ function Home() {
 
           <div className="tasks-list">
             <h3>Your Tasks</h3>
-            {todos.length > 0 ? (
+            {filteredTodos.length > 0 ? (
               <ul>
                 <AnimatePresence>
-                  {todos.map((todo) => (
+                  {filteredTodos.map((todo) => (
                     <motion.li
                       key={todo.id}
-                      className={todo.completed ? "completed" : ""}
+                      className={todo.completed ? "completed locked" : ""}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -50 }}
@@ -334,26 +373,29 @@ function Home() {
                         <motion.button
                           onClick={() => handleToggleComplete(todo.id, todo.completed)}
                           className={`complete-button ${todo.completed ? "completed" : ""}`}
-                          title={todo.completed ? "Mark as incomplete" : "Mark as complete"}
+                          title={todo.completed ? "Completed" : "Mark as complete"}
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          aria-label={todo.completed ? "Mark as incomplete" : "Mark as complete"}
+                          aria-label={todo.completed ? "Completed" : "Mark as complete"}
+                          disabled={todo.completed}
                         >
                           <Check size={18} />
                         </motion.button>
                         <span className="task-text">{todo.text}</span>
                       </div>
                       <div className="task-actions">
-                        <motion.button
-                          onClick={() => openEditDialog(todo)}
-                          className="edit-button"
-                          title="Edit task"
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.9 }}
-                          aria-label="Edit task"
-                        >
-                          <Edit2 size={18} />
-                        </motion.button>
+                        {!todo.completed && (
+                          <motion.button
+                            onClick={() => openEditDialog(todo)}
+                            className="edit-button"
+                            title="Edit task"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            aria-label="Edit task"
+                          >
+                            <Edit2 size={18} />
+                          </motion.button>
+                        )}
                         <motion.button
                           onClick={() => handleDeleteTodo(todo.id)}
                           className="delete-button"
@@ -376,8 +418,10 @@ function Home() {
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
               >
-                <p>No tasks yet</p>
-                <p className="no-tasks-subtitle">Add your first task to get started!</p>
+                <p>{searchTerm ? "No matching tasks found" : "No tasks yet"}</p>
+                <p className="no-tasks-subtitle">
+                  {searchTerm ? "Try a different search" : "Add your first task to get started!"}
+                </p>
               </motion.div>
             )}
           </div>
