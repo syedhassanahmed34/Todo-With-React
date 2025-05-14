@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth"
 import { auth, db } from "../firebase"
-import { doc, setDoc, getDoc } from "firebase/firestore"
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
 import "./Login.css"
 
 export default function Login() {
@@ -15,45 +15,45 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
 
-  // Check if there's a recent signup to auto-fill the email
   useEffect(() => {
     const recentSignup = localStorage.getItem("recentSignup")
     if (recentSignup) {
       const { email } = JSON.parse(recentSignup)
       setEmail(email)
-      // Clear the storage after using it
       localStorage.removeItem("recentSignup")
     }
   }, [])
 
   const validateForm = () => {
     setError("")
-
-    // Check if fields are empty
     if (!email || !password) {
       setError("Please enter your email and password")
       return false
     }
-
     return true
   }
 
   const handleEmailLogin = async () => {
-    // Validate form first
     if (!validateForm()) return
 
     setLoading(true)
     setError("")
 
     try {
-      // Firebase email/password authentication
+      // Check if user exists in Firestore
+      const usersRef = collection(db, "users")
+      const q = query(usersRef, where("email", "==", email))
+      const querySnapshot = await getDocs(q)
+
+      if (querySnapshot.empty) {
+        throw new Error("Account not registered. Please sign up first.")
+      }
+
       await signInWithEmailAndPassword(auth, email, password)
       navigate("/home")
     } catch (error) {
       console.error("Login error:", error)
-
-      // Handle specific Firebase auth errors
-      if (error.code === "auth/user-not-found") {
+      if (error.code === "auth/user-not-found" || error.message.includes("not registered")) {
         setError("Account not registered. Please sign up first.")
       } else if (error.code === "auth/wrong-password") {
         setError("Invalid password. Please try again.")
@@ -72,34 +72,29 @@ export default function Login() {
     setError("")
 
     try {
-      // Firebase Google authentication
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
       const user = result.user
 
-      // Check if user document exists in Firestore
       const userDocRef = doc(db, "users", user.uid)
       const userDoc = await getDoc(userDocRef)
 
-      // If user doesn't exist in Firestore, create a new document
       if (!userDoc.exists()) {
-        await setDoc(userDocRef, {
-          name: user.displayName || email.split("@")[0],
-          email: user.email,
-          createdAt: new Date(),
-        })
+        await signOut(auth)
+        throw new Error("Account not registered. Please sign up first.")
       }
 
       navigate("/home")
     } catch (error) {
       console.error("Google login error:", error)
-      setError("Google login failed. Please try again.")
+      setError(error.message.includes("not registered") 
+        ? "Account not registered. Please sign up first."
+        : "Google login failed. Please try again.")
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle Enter key press
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleEmailLogin()
@@ -111,11 +106,8 @@ export default function Login() {
       <div className="login-card">
         <div className="login-illustration">
           <div className="illustration-content">
-            <h2 className="illustration-title">Welcome Back!
-            </h2>
-            <p className="illustration-subtitle">Log in to manage your tasks and stay organized.
-
-            </p>
+            <h2 className="illustration-title">Welcome Back!</h2>
+            <p className="illustration-subtitle">Log in to manage your tasks and stay organized.</p>
             <div className="illustration-image-container">
               <img src="https://img.lovepik.com/photo/45009/7677.jpg_wh860.jpg" alt="Login illustration" className="illustration-image" />
             </div>

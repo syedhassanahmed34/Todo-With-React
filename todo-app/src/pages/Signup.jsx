@@ -20,56 +20,41 @@ export default function Signup() {
 
   const validateForm = () => {
     setError("")
-
-    // Check if fields are empty
     if (!name || !email || !password || !confirmPassword) {
       setError("Please fill in all fields")
       return false
     }
-
-    // Check if passwords match
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       return false
     }
-
-    // Check password length
     if (password.length < 6) {
       setError("Password must be at least 6 characters")
       return false
     }
-
     return true
   }
 
   const handleSignup = async () => {
-    // Validate form first
     if (!validateForm()) return
 
     setLoading(true)
     setError("")
 
     try {
-      // Create user with Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, email, password)
       const user = userCredential.user
 
-      // Store additional user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         name: name,
         email: email,
         createdAt: new Date(),
       })
 
-      // Store email for login page
       localStorage.setItem("recentSignup", JSON.stringify({ email }))
-
-      // Navigate to login page after successful signup
       navigate("/login")
     } catch (error) {
       console.error("Signup error:", error)
-
-      // Handle specific Firebase auth errors
       if (error.code === "auth/email-already-in-use") {
         setError("Email is already registered. Please use a different email or login.")
       } else if (error.code === "auth/invalid-email") {
@@ -89,19 +74,16 @@ export default function Signup() {
     setError("")
 
     try {
-      // Firebase Google authentication
       const provider = new GoogleAuthProvider()
       const result = await signInWithPopup(auth, provider)
       const user = result.user
 
-      // Store additional user data in Firestore
       await setDoc(doc(db, "users", user.uid), {
         name: user.displayName || email.split("@")[0],
         email: user.email,
         createdAt: new Date(),
       })
 
-      // Navigate to home page after successful Google signup
       navigate("/home")
     } catch (error) {
       console.error("Google signup error:", error)
@@ -111,7 +93,6 @@ export default function Signup() {
     }
   }
 
-  // Handle Enter key press
   const handleKeyPress = (e) => {
     if (e.key === "Enter") {
       handleSignup()
