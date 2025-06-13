@@ -1,0 +1,101 @@
+/* FirstPage.css */
+
+.firstpage-container {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  background: url("https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1920&q=80")
+    no-repeat center center/cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.6); /* Dark overlay for text visibility */
+  z-index: 1;
+}
+
+.firstpage-card {
+  position: relative;
+  z-index: 2;
+  background-color: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  padding: 40px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 90%;
+  width: 400px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+
+.firstpage-title {
+  font-size: 2rem;
+  color: black;
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.firstpage-subtitle {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  color: #d1d1d1;
+}
+
+.firstpage-button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.firstpage-primary-button,
+.firstpage-secondary-button {
+  text-decoration: none;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: 0.3s ease;
+}
+
+.firstpage-primary-button {
+  background-color: #4ade80;
+  color: #000;
+  border: none;
+}
+
+.firstpage-primary-button:hover {
+  background-color: #22c55e;
+}
+
+.firstpage-secondary-button {
+  background-color: transparent;
+  border: 2px solid #fff;
+  color: #fff;
+}
+
+.firstpage-secondary-button:hover {
+  background-color: #fff;
+  color: #000;
+}
+
+/* 🔁 Responsive Styling */
+@media (max-width: 768px) {
+  .firstpage-card {
+    width: 90%;
+    padding: 30px 20px;
+  }
+
+  .firstpage-title {
+    font-size: 2rem;
+  }
+
+  .firstpage-subtitle {
+    font-size: 1rem;
+  }
+}
